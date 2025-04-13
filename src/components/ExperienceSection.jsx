@@ -1,10 +1,15 @@
 import { Briefcase } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { formatDate } from "../utils/dateUtils";
 import { fireApi } from "../utils/useFire";
 import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
+import ProfileContext from "../context/profileContext";
 
-const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
+const ExperienceSection = ({ userData, GetUserProfile }) => {
+  const { user } = useContext(ProfileContext);
+  const isOwnProfile = user?.username === userData?.username;
+
   const [isAdding, setIsAdding] = useState(false);
   const [experiences, setExperiences] = useState([]);
   const [formData, setFormData] = useState({
@@ -16,12 +21,11 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
     currentlyWorking: false,
   });
   const [editingId, setEditingId] = useState(null);
-
+  const { username } = useParams();
   useEffect(() => {
     if (userData?.experience) {
       setExperiences(userData.experience);
     }
-    // Remove the automatic form opening on empty experience
   }, [userData]);
 
   const resetForm = () => {
@@ -46,8 +50,7 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
       toast.success(res?.message || "Experience added successfully");
       setIsAdding(false);
       resetForm();
-      window.location.reload(); // Refresh the page to show the new experience
-      // GetUserProfile();
+      GetUserProfile(username);
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to add experience");
@@ -58,12 +61,12 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
     try {
       const res = await fireApi("/update-experience", "PUT", {
         expId: editingId,
-        ...formData
+        ...formData,
       });
       toast.success(res?.message || "Experience updated successfully");
       setEditingId(null);
       resetForm();
-      window.location.reload(); // Refresh the page to show the updated experience
+      GetUserProfile(username);
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to update experience");
@@ -120,13 +123,14 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
               <h3 className="font-semibold">{exp.title}</h3>
               <p className="text-gray-600">{exp.company}</p>
               <p className="text-gray-500 text-sm">
-                {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : "Present"}
+                {formatDate(exp.startDate)} -{" "}
+                {exp.endDate ? formatDate(exp.endDate) : "Present"}
               </p>
               <p className="text-gray-700">{exp.description}</p>
             </div>
           </div>
           {isOwnProfile && !editingId && (
-            <button 
+            <button
               onClick={() => handleEditExperience(exp)}
               className="text-primary hover:text-primary-dark"
             >
@@ -136,11 +140,12 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
         </div>
       ))}
 
-      {(isAdding || editingId) && (
+      {isOwnProfile && (isAdding || editingId) && (
         <div className="mt-4 border-t pt-4">
           <h3 className="font-semibold mb-2">
             {editingId ? "Edit Experience" : "Add New Experience"}
           </h3>
+
           <input
             type="text"
             placeholder="Title*"
@@ -217,14 +222,18 @@ const ExperienceSection = ({ userData, GetUserProfile, isOwnProfile }) => {
         </div>
       )}
 
-      {isOwnProfile && experiences.length > 0 && !isAdding && !editingId && (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="mt-4 bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300"
-        >
-          Add New Experience
-        </button>
-      )}
+      {isOwnProfile ? (
+        !isAdding && !editingId ? (
+          experiences.length > 0 ? (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="mt-4 bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300"
+            >
+              Add New Experience
+            </button>
+          ) : null
+        ) : null
+      ) : null}
     </div>
   );
 };

@@ -36,15 +36,6 @@ const Home = () => {
     }
   };
 
-  // const deleteUser = async (userId) => {
-  //   try {
-  //     await fireApi(`/admin/delete/${userId}`, "DELETE");
-  //     toast.success("User deleted successfully");
-  //   } catch (error) {
-  //     toast.error(error.message || "Failed to delete user");
-  //   }
-  // };
-
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     {

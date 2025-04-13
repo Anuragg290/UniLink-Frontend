@@ -38,6 +38,7 @@
 
 
 const baseURL = "http://localhost:3000";
+// const baseURL = "https://unilink-backend-eight.vercel.app";
 
 export const fireApi = async (endpoint, method, data = null) => {
     const token = localStorage.getItem("user-visited-dashboard");
@@ -75,3 +76,4 @@ export const fireApi = async (endpoint, method, data = null) => {
         throw error;
     }
 };
+

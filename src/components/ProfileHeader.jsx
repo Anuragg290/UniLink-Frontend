@@ -15,12 +15,15 @@ import {
 } from "@mui/material";
 import { CameraAlt, Close } from "@mui/icons-material";
 import ProfileContext from "../context/profileContext";
+import { useParams } from "react-router-dom";
 
-const ProfileHeader = ({ userData, isOwnProfile }) => {
+const ProfileHeader = ({ userData, GetUserProfile }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { GetUserProfile } = useContext(ProfileContext);
+  const { user } = useContext(ProfileContext);
   const profilePicInputRef = useRef(null);
   const bannerInputRef = useRef(null);
+  const isOwnProfile = user?.username === userData?.username;
+  const { username } = useParams();
 
   const [formData, setFormData] = useState({
     bannerImg: userData?.bannerImg || "",
@@ -50,7 +53,7 @@ const ProfileHeader = ({ userData, isOwnProfile }) => {
       reader.readAsDataURL(file);
       setFormData(prev => ({ ...prev, [event.target.name]: file }));
     }
-    updateProfile();
+    // updateProfile();
     event.target.value = ""; 
   };
 
@@ -91,8 +94,7 @@ const ProfileHeader = ({ userData, isOwnProfile }) => {
       );
 
       toast.success(response?.message || "Profile updated successfully");
-      GetUserProfile();
-      window.location.reload();
+      GetUserProfile(username);
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error in updateProfile:", error);

@@ -2,16 +2,18 @@ import toast from "react-hot-toast";
 import { Loader } from "lucide-react";
 import { fireApi } from "../../utils/useFire";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import ProfileContext from "../../context/profileContext";
 
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { GetUserProfile } = useContext(ProfileContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-	
+
     const formData = new FormData(e.target);
     try {
       const data = Object.fromEntries(formData.entries());
@@ -29,9 +31,9 @@ const LoginForm = () => {
       toast.success("Login successful");
       e.target.reset();
       navigate("/");
-
+      GetUserProfile();
     } catch (error) {
-      console.log(error);	
+      console.log(error);
       toast.error(error.message || "Login failed");
     } finally {
       setIsLoading(false);

@@ -1,10 +1,10 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { fireApi } from "../utils/useFire";
 import toast from "react-hot-toast";
-import ProfileContext from "../context/profileContext";
 import { ShieldCheck, X } from "lucide-react";
+import { useParams } from "react-router-dom";
 
-const Certification = ({ userData, isOwnProfile }) => {
+const Certification = ({ userData, GetUserProfile, isOwnProfile }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [certifications, setCertifications] = useState([]);
   const [formData, setFormData] = useState({
@@ -13,16 +13,16 @@ const Certification = ({ userData, isOwnProfile }) => {
     startDate: "",
     endDate: "",
     description: "",
-    file: null
+    file: null,
   });
   const [editingId, setEditingId] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const { GetUserProfile } = useContext(ProfileContext);
+
+  const { username } = useParams();
 
   useEffect(() => {
     if (userData?.certifications) {
       setCertifications(userData.certifications);
-      // Show add form if no certifications exist
       if (userData.certifications.length === 0 && isOwnProfile) {
         setIsAdding(true);
       }
@@ -36,7 +36,7 @@ const Certification = ({ userData, isOwnProfile }) => {
       startDate: "",
       endDate: "",
       description: "",
-      file: null
+      file: null,
     });
     setPreviewUrl("");
     setEditingId(null);
@@ -45,8 +45,15 @@ const Certification = ({ userData, isOwnProfile }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({ ...formData, file });
-      setPreviewUrl(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          file: reader.result, // Store base64 in the 'file' field
+        }));
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -57,27 +64,20 @@ const Certification = ({ userData, isOwnProfile }) => {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("title", formData.title);
-      formDataToSend.append("institute", formData.institute);
-      formDataToSend.append("startDate", formData.startDate);
-      formDataToSend.append("endDate", formData.endDate);
-      formDataToSend.append("description", formData.description);
-      if (formData.file) {
-        formDataToSend.append("file", formData.file);
-      }
+      const body = {
+        title: formData.title,
+        institute: formData.institute,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        description: formData.description,
+        file: formData.file,
+      };
 
-      const res = await fireApi("/add-certification", "POST", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      const res = await fireApi("/add-certification", "POST", body);
       toast.success(res?.message || "Certification added successfully");
       resetForm();
       setIsAdding(false);
-      GetUserProfile();
-      window.location.reload(); // Refresh the page to show the new certification
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error adding certification:", error);
       toast.error(error.message || "Failed to add certification");
@@ -86,26 +86,20 @@ const Certification = ({ userData, isOwnProfile }) => {
 
   const handleUpdateCertification = async () => {
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("certId", editingId);
-      formDataToSend.append("title", formData.title);
-      formDataToSend.append("institute", formData.institute);
-      formDataToSend.append("startDate", formData.startDate);
-      formDataToSend.append("endDate", formData.endDate);
-      formDataToSend.append("description", formData.description);
-      if (formData.file) {
-        formDataToSend.append("file", formData.file);
-      }
+      const body = {
+        certId: editingId,
+        title: formData.title,
+        institute: formData.institute,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        description: formData.description,
+        file: formData.file,
+      };
 
-      const res = await fireApi("/update-certification", "PUT", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      const res = await fireApi("/update-certification", "PUT", body);
       toast.success(res?.message || "Certification updated successfully");
       resetForm();
-      GetUserProfile();
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error updating certification:", error);
       toast.error(error.message || "Failed to update certification");
@@ -116,7 +110,7 @@ const Certification = ({ userData, isOwnProfile }) => {
     try {
       const res = await fireApi(`/delete-certification/${id}`, "DELETE");
       toast.success(res?.message || "Certification deleted successfully");
-      GetUserProfile();
+      GetUserProfile(GetUserProfile);
     } catch (error) {
       console.error("Error deleting certification:", error);
       toast.error(error.message || "Failed to delete certification");
@@ -132,7 +126,7 @@ const Certification = ({ userData, isOwnProfile }) => {
       startDate: cert.startDate,
       endDate: cert.endDate || "",
       description: cert.description || "",
-      file: null
+      file: null,
     });
     if (cert.certificateImage) {
       setPreviewUrl(cert.certificateImage);
@@ -164,7 +158,17 @@ const Certification = ({ userData, isOwnProfile }) => {
               <h3 className="font-semibold">{cert.title}</h3>
               <p className="text-gray-600">{cert.institute}</p>
               <p className="text-gray-500 text-sm">
-                {cert.startDate} - {cert.endDate || "Present"}
+                {new Date(cert.startDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                })}{" "}
+                -
+                {cert.endDate
+                  ? new Date(cert.endDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                    })
+                  : "Present"}
               </p>
               <p className="text-gray-700 mt-1">{cert.description}</p>
               {cert.certificateImage && (
@@ -204,7 +208,9 @@ const Certification = ({ userData, isOwnProfile }) => {
             type="text"
             placeholder="Title*"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
             className="w-full p-2 border rounded mb-2"
             required
           />

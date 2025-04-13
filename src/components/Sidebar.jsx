@@ -4,28 +4,33 @@ import { useContext } from "react";
 import ProfileContext from "../context/profileContext";
 
 export default function Sidebar() {
+
   const { user } = useContext(ProfileContext);
+  
   return (
     <div className="bg-secondary rounded-lg shadow">
       <div className="p-4 text-center">
         <div
           className="h-16 rounded-t-lg bg-cover bg-center"
           style={{
-            backgroundImage: "url('/banner.png')", // Fixed background image URL
+            backgroundImage: "url('/banner.png')",
           }}
         />
         <Link to={`/profile/${user?.username}`} className="block">
           <img
             src={user?.profilePicture || "/avatar.png"}
-            alt={user?.name || "User"} // Fixed alt text
-            className="w-20 h-20 rounded-full mx-auto mt-[-40px] border-4 border-white" // Added white border
+            alt={user?.name || "User"}
+            className="w-20 h-20 rounded-full mx-auto mt-[-40px] border-4 border-white"
           />
           <h2 className="text-xl font-semibold mt-2 inline-flex items-center justify-center gap-1 mx-auto">
             {user?.name}
-            {user?.isVerified === true && (
-              <BadgeCheck className="w-5 h-5 text-blue-500" /> 
-            )}
           </h2>
+          {user?.isVerified === true && (
+            <p className="justify-center flex text-gray-400">
+              Account Verified
+              <BadgeCheck className=" ml-2 w-5 h-5 text-blue-500" />
+            </p>
+          )}
         </Link>
         <p className="text-gray-600 mt-1">{user?.headline}</p>{" "}
         <p className="text-gray-500 text-xs mt-1">

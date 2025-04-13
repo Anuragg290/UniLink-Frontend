@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { fireApi } from "../utils/useFire";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
@@ -8,15 +8,22 @@ import {
   Button,
   Box,
   IconButton,
-  InputAdornment
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { useParams } from "react-router-dom";
+import ProfileContext from "../context/profileContext";
 
-const SkillsSection = ({ userData, isOwnProfile }) => {
+const SkillsSection = ({ userData, GetUserProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState("");
   const [editingSkill, setEditingSkill] = useState(null);
+  const params = useParams();
+  const { username } = params;
+
+  const { user } = useContext(ProfileContext);
+  const isOwnProfile = user?.username === userData?.username;
 
   useEffect(() => {
     if (userData?.skills) {
@@ -31,8 +38,7 @@ const SkillsSection = ({ userData, isOwnProfile }) => {
       const res = await fireApi("/skills", "POST", { skill: newSkill });
       toast.success(res?.message || "Skill added successfully");
       setNewSkill("");
-    //   GetUserProfile();
-	window.location.reload(); // Refresh the page to show the new skill
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error adding skill:", error);
       toast.error(error.message || "Failed to add skill");
@@ -45,13 +51,12 @@ const SkillsSection = ({ userData, isOwnProfile }) => {
     try {
       const res = await fireApi("/skills", "PUT", {
         oldSkill,
-        newSkill: newSkill
+        newSkill: newSkill,
       });
       toast.success(res?.message || "Skill updated successfully");
       setEditingSkill(null);
       setNewSkill("");
-    //   GetUserProfile();
-	window.location.reload(); // Refresh the page to show the updated skill
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error updating skill:", error);
       toast.error(error.message || "Failed to update skill");
@@ -62,8 +67,7 @@ const SkillsSection = ({ userData, isOwnProfile }) => {
     try {
       const res = await fireApi("/skills", "DELETE", { skill });
       toast.success(res?.message || "Skill deleted successfully");
-    //   GetUserProfile();
-	window.location.reload(); // Refresh the page to show the deleted skill
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error deleting skill:", error);
       toast.error(error.message || "Failed to delete skill");
@@ -95,24 +99,35 @@ const SkillsSection = ({ userData, isOwnProfile }) => {
     <div className="bg-white shadow rounded-lg p-6 mb-6">
       <h2 className="text-xl font-semibold mb-4">Skills</h2>
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-        {skills.map((skill, index) => (
-          <Chip
-            key={index}
-            label={skill}
-            onDelete={isEditing ? () => handleDeleteSkill(skill) : null}
-            deleteIcon={<X size={16} />}
-            variant="outlined"
-            onClick={isEditing ? () => startEditing(skill) : null}
-            sx={{
-              cursor: isEditing ? "pointer" : "default",
-              "&:hover": {
-                backgroundColor: isEditing ? "action.hover" : "transparent"
-              }
-            }}
-          />
-        ))}
-      </Box>
+      {/* <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+        {userData?.isVerified ? (
+          skills.length > 0 ? (
+            skills.map((skill, index) => (
+              <Chip
+                key={index}
+                label={skill}
+                onDelete={isEditing ? () => handleDeleteSkill(skill) : null}
+                deleteIcon={<X size={16} />}
+                variant="outlined"
+                onClick={isEditing ? () => startEditing(skill) : null}
+                sx={{
+                  cursor: isEditing ? "pointer" : "default",
+                  "&:hover": {
+                    backgroundColor: isEditing ? "action.hover" : "transparent",
+                  },
+                }}
+              />
+            ))
+          ) : (
+            <p className="text-gray-500">No skills available</p>
+          )
+        ) : (
+          <p className="text-yellow-500">
+            Skills are visible only after verification please verify your
+            certificate first.
+          </p>
+        )}
+      </Box> */}
 
       {isEditing && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
@@ -139,7 +154,7 @@ const SkillsSection = ({ userData, isOwnProfile }) => {
                     <AddIcon />
                   </IconButton>
                 </InputAdornment>
-              )
+              ),
             }}
           />
           {editingSkill && (

@@ -1,9 +1,14 @@
 import { School } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { fireApi } from "../utils/useFire";
 import toast from "react-hot-toast";
+import ProfileContext from "../context/profileContext";
+import { useParams } from "react-router-dom";
 
-const EducationSection = ({ userData, isOwnProfile }) => {
+const EducationSection = ({ userData, GetUserProfile }) => {
+  const { user } = useContext(ProfileContext);
+  const isOwnProfile = user?.username === userData?.username;
+  const { username } = useParams();
   const [isAdding, setIsAdding] = useState(false);
   const [educations, setEducations] = useState([]);
   const [formData, setFormData] = useState({
@@ -30,17 +35,12 @@ const EducationSection = ({ userData, isOwnProfile }) => {
   };
 
   const handleAddEducation = async () => {
-    // if (!formData.school || !formData.fieldOfStudy || !formData.startYear) {
-    //   toast.error("Please fill required fields");
-    //   return;
-    // }
-
     try {
       const res = await fireApi("/add-education", "POST", formData);
       toast.success(res?.message || "Education added successfully");
       setIsAdding(false);
       resetForm();
-      window.location.reload(); // Refresh the page to show the new education
+      GetUserProfile(username);
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to add education");
@@ -51,12 +51,12 @@ const EducationSection = ({ userData, isOwnProfile }) => {
     try {
       const res = await fireApi("/update-education", "PUT", {
         eduId: editingId,
-        ...formData
+        ...formData,
       });
       toast.success(res?.message || "Education updated successfully");
       setEditingId(null);
       resetForm();
-      window.location.reload(); // Refresh the page to show the updated education
+      GetUserProfile(username);
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to update education");
@@ -120,7 +120,7 @@ const EducationSection = ({ userData, isOwnProfile }) => {
           </div>
           {isOwnProfile && !editingId && (
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={() => handleEditEducation(edu)}
                 className="text-primary hover:text-primary-dark"
               >

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import { fireApi } from "../utils/useFire";
 import ProfileContext from "../context/profileContext";
 
@@ -12,7 +11,6 @@ const UserProvider = ({ children }) => {
       setUser(response);
     } catch (error) {
       console.error("Error in GetUserProfile:", error);
-      toast.error(error.message || "Something went wrong!");
     }
   };
 

@@ -25,18 +25,18 @@ const Navbar = () => {
     if (!username.trim()) return;
 
     try {
-      const search = await fireApi(`/${username}`, "GET");
+      const search = await fireApi(`/search-users?q=${username}`, "POST");
       console.log(search, "search result");
 
-      if (search && search.username) {
-        setGetUserResult(search);
+      if (search && search.length > 0) {
+        setGetUserResult(search); // Now storing array of users
         setSearchStatus("found");
       } else {
-        setGetUserResult(null);
+        setGetUserResult([]);
         setSearchStatus("not-found");
       }
     } catch (error) {
-      setGetUserResult(null);
+      setGetUserResult([]);
       setSearchStatus("not-found");
       console.error("Error in searchUser:", error);
     }
@@ -101,33 +101,30 @@ const Navbar = () => {
               {/* Dropdown - Show only if user result has data */}
               {searchUsername && (
                 <div className="absolute top-full mt-1 w-full bg-white shadow-lg border rounded-md z-10 max-h-60 overflow-y-auto text-sm">
-                  {searchStatus === "found" && getUserResult?.username ? (
-                    <Link
-                      to={`/profile/${getUserResult.username}`}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                      onClick={() => {
-                        setSearchUsername("");
-                        setGetUserResult({});
-                        setSearchStatus("");
-                      }}
-                    >
-                      <img
-                        src={
-                          getUserResult.profilePicture || "/avatar.png"
-                        }
-                        alt="profile"
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div className="ml-2 flex flex-col justify-center">
-                        <p className="font-semibold">{getUserResult.name}</p>
-                        <p className="text-gray-500">
-                          @{getUserResult.username}
-                        </p>
-                        <p className="text-gray-400 text-xs">
-                          {getUserResult.email}
-                        </p>
-                      </div>
-                    </Link>
+                  {searchStatus === "found" && getUserResult.length > 0 ? (
+                    getUserResult.map((user) => (
+                      <Link
+                        key={user._id}
+                        to={`/profile/${user.username}`}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                        onClick={() => {
+                          setSearchUsername("");
+                          setGetUserResult([]);
+                          setSearchStatus("");
+                        }}
+                      >
+                        <img
+                          src={user.profilePicture || "/avatar.png"}
+                          alt="profile"
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div className="ml-2 flex flex-col justify-center">
+                          <p className="font-semibold">{user.name}</p>
+                          <p className="text-gray-500">@{user.username}</p>
+                          <p className="text-gray-400 text-xs">{user.email}</p>
+                        </div>
+                      </Link>
+                    ))
                   ) : searchStatus === "not-found" ? (
                     <div className="px-4 py-2 text-gray-500">
                       No user found by this username

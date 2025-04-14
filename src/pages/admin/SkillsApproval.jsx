@@ -39,10 +39,10 @@ const SkillsApproval = () => {
     }
   };
 
-  const handleVerify = async (userId, certificationId) => {
+  const handleVerify = async (userId, skillId) => {
     try {
       const res = await fireApi(
-        `/admin/certifications/approve/${userId}/${certificationId}`,
+        `/admin/skills/approve/${userId}/${skillId}`,
         "PUT"
       );
       toast.success(res.message || "Certification verified successfully");
@@ -52,11 +52,11 @@ const SkillsApproval = () => {
     }
   };
 
-  const handleReject = async (certificationId) => {
+  const handleReject = async (userId, skillId) => {
     try {
       const res = await fireApi(
-        `/admin/certifications/reject/${certificationId}`,
-        "DELETE"
+        `/admin/skills/reject/${userId}/${skillId}`,
+        "PUT"
       );
       toast.success(res.message || "Certification rejected");
       getUsers();
@@ -120,7 +120,7 @@ const SkillsApproval = () => {
       headerName: "Status",
       width: 130,
       renderCell: (params) => {
-        const status = params.value; // "pending", "approved", or "rejected"
+        const status = params.value;
   
         return (
           <Chip
@@ -161,14 +161,14 @@ const SkillsApproval = () => {
               variant="outlined"
               color="error"
               size="small"
-              onClick={() => handleReject(params.row.skillId)}
+              onClick={() => handleReject(params.row.userId, params.row.skillId)}
               sx={{ minWidth: 80, fontSize: "0.75rem", py: 0.5 }}
             >
               Reject
             </Button>
           </Box>
         ) : (
-          <Typography variant="body2" color="textSecondary">
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
             Skill is {params?.row?.status}
           </Typography>
         ),

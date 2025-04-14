@@ -43,7 +43,7 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        setImage(reader.result.split(',')[1]); // Get base64 part after comma
+        setImage(reader.result); 
       };
       reader.readAsDataURL(file);
     }

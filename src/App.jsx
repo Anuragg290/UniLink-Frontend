@@ -19,6 +19,7 @@ import Profile from "./pages/admin/Profile";
 import Events from "./pages/Events";
 import Analytics from "./pages/admin/Analytics";
 import Loading from "./utils/LoaderUtils";
+import SkillsApproval from "./pages/admin/SkillsApproval";
 
 function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
@@ -60,6 +61,7 @@ function App() {
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<Home />} />
           <Route path="certifications-approval" element={<CertificatesApproval />} />
+          <Route path="skills-approval" element={<SkillsApproval />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

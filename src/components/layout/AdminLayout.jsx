@@ -41,6 +41,11 @@ const AdminLayout = () => {
               Home
             </div>
           </Link>
+          <Link to="/admin/skills-approval" className="block">
+            <div className="py-2 px-3 hover:bg-blue-700 rounded cursor-pointer transition-colors">
+            Skills Approval
+            </div>
+          </Link>
           <Link to="/admin/certifications-approval" className="block">
             <div className="py-2 px-3 hover:bg-blue-700 rounded cursor-pointer transition-colors">
               Certifications Approval

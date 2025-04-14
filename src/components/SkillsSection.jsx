@@ -7,8 +7,10 @@ import {
   TextField,
   Button,
   Box,
-  IconButton,
-  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { useParams } from "react-router-dom";
@@ -17,8 +19,12 @@ import ProfileContext from "../context/profileContext";
 const SkillsSection = ({ userData, GetUserProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState([]);
-  const [newSkill, setNewSkill] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [editingSkill, setEditingSkill] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
   const params = useParams();
   const { username } = params;
 
@@ -31,41 +37,68 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
     }
   }, [userData]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setImage(reader.result.split(',')[1]); // Get base64 part after comma
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setImage(null);
+    setImagePreview(null);
+    setEditingSkill(null);
+  };
+
   const handleAddSkill = async () => {
-    if (!newSkill.trim()) return;
+    if (!name.trim()) return;
 
     try {
-      const res = await fireApi("/skills", "POST", { skill: newSkill });
+      const res = await fireApi("/skills", "POST", { 
+        name, 
+        description, 
+        image 
+      });
       toast.success(res?.message || "Skill added successfully");
-      setNewSkill("");
+      resetForm();
       GetUserProfile(username);
+      setOpenDialog(false);
     } catch (error) {
       console.error("Error adding skill:", error);
       toast.error(error.message || "Failed to add skill");
     }
   };
 
-  const handleUpdateSkill = async (oldSkill) => {
-    if (!newSkill.trim()) return;
+  const handleUpdateSkill = async () => {
+    if (!name.trim() || !editingSkill) return;
 
     try {
       const res = await fireApi("/skills", "PUT", {
-        oldSkill,
-        newSkill: newSkill,
+        skillId: editingSkill._id,
+        name,
+        description,
+        image
       });
       toast.success(res?.message || "Skill updated successfully");
-      setEditingSkill(null);
-      setNewSkill("");
+      resetForm();
       GetUserProfile(username);
+      setOpenDialog(false);
     } catch (error) {
       console.error("Error updating skill:", error);
       toast.error(error.message || "Failed to update skill");
     }
   };
 
-  const handleDeleteSkill = async (skill) => {
+  const handleDeleteSkill = async (skillId) => {
     try {
-      const res = await fireApi("/skills", "DELETE", { skill });
+      const res = await fireApi("/skills", "DELETE", { skillId });
       toast.success(res?.message || "Skill deleted successfully");
       GetUserProfile(username);
     } catch (error) {
@@ -74,39 +107,35 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (editingSkill) {
-        handleUpdateSkill(editingSkill);
-      } else {
-        handleAddSkill();
-      }
-    }
-  };
-
   const startEditing = (skill) => {
     setEditingSkill(skill);
-    setNewSkill(skill);
+    setName(skill.name);
+    setDescription(skill.description || "");
+    setImagePreview(skill.image ? `data:image/jpeg;base64,${skill.image}` : null);
+    setImage(skill.image || null);
+    setOpenDialog(true);
   };
 
-  const cancelEditing = () => {
-    setEditingSkill(null);
-    setNewSkill("");
+  const handleSubmit = () => {
+    if (editingSkill) {
+      handleUpdateSkill();
+    } else {
+      handleAddSkill();
+    }
   };
 
   return (
     <div className="bg-white shadow rounded-lg p-6 mb-6">
       <h2 className="text-xl font-semibold mb-4">Skills</h2>
 
-      {/* <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-        {userData?.isVerified ? (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+        {userData?.isSkillsVerified === true ? (
           skills.length > 0 ? (
             skills.map((skill, index) => (
               <Chip
                 key={index}
-                label={skill}
-                onDelete={isEditing ? () => handleDeleteSkill(skill) : null}
+                label={skill.name}
+                onDelete={isEditing ? () => handleDeleteSkill(skill._id) : null}
                 deleteIcon={<X size={16} />}
                 variant="outlined"
                 onClick={isEditing ? () => startEditing(skill) : null}
@@ -127,43 +156,83 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
             certificate first.
           </p>
         )}
-      </Box> */}
+      </Box>
 
       {isEditing && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder={editingSkill ? "Edit skill" : "Add new skill"}
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            onKeyPress={handleKeyPress}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={
-                      editingSkill
-                        ? () => handleUpdateSkill(editingSkill)
-                        : handleAddSkill
-                    }
-                    disabled={!newSkill.trim()}
-                    edge="end"
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
+        <Box sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              resetForm();
+              setOpenDialog(true);
             }}
-          />
-          {editingSkill && (
-            <Button variant="outlined" onClick={cancelEditing}>
-              Cancel
-            </Button>
-          )}
+            startIcon={<AddIcon />}
+          >
+            Add New Skill
+          </Button>
         </Box>
       )}
+
+      <Dialog open={openDialog} onClose={() => {
+        setOpenDialog(false);
+        resetForm();
+      }}
+      >
+        <DialogTitle>{editingSkill ? "Edit Skill" : "Add New Skill"}</DialogTitle>
+        <DialogContent sx={{width: '400px'}}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Skill Name"
+              variant="outlined"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              variant="outlined"
+              multiline
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="skill-image-upload"
+              type="file"
+              onChange={handleImageChange}
+              />
+            <label htmlFor="skill-image-upload">
+              <Button variant="outlined" component="span">
+                Upload Image
+              </Button>
+            </label>
+              <p className="text-gray-500 -mt-3">Image should be upload of skill certification </p>
+            {imagePreview && (
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                style={{ maxWidth: '100%', maxHeight: '200px', marginTop: '10px' }} 
+              />
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setOpenDialog(false);
+            resetForm();
+          }}>Cancel</Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={!name.trim()}
+            variant="contained"
+          >
+            {editingSkill ? "Update" : "Add"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {isOwnProfile && (
         <Box sx={{ mt: 2 }}>
@@ -172,7 +241,7 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
               variant="contained"
               onClick={() => {
                 setIsEditing(false);
-                cancelEditing();
+                resetForm();
               }}
             >
               Done Editing

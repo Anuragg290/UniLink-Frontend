@@ -43,7 +43,7 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        setImage(reader.result); 
+        setImage(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -61,10 +61,10 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
     if (!name.trim()) return;
 
     try {
-      const res = await fireApi("/skills", "POST", { 
-        name, 
-        description, 
-        image 
+      const res = await fireApi("/skills", "POST", {
+        name,
+        description,
+        image,
       });
       toast.success(res?.message || "Skill added successfully");
       resetForm();
@@ -84,7 +84,7 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
         skillId: editingSkill._id,
         name,
         description,
-        image
+        image,
       });
       toast.success(res?.message || "Skill updated successfully");
       resetForm();
@@ -130,29 +130,31 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
         {userData?.isSkillsVerified === true ? (
-          skills.length > 0 ? (
-            skills.map((skill, index) => (
-              <Chip
-                key={index}
-                label={skill.name}
-                onDelete={isEditing ? () => handleDeleteSkill(skill._id) : null}
-                deleteIcon={<X size={16} />}
-                variant="outlined"
-                onClick={isEditing ? () => startEditing(skill) : null}
-                sx={{
-                  cursor: isEditing ? "pointer" : "default",
-                  "&:hover": {
-                    backgroundColor: isEditing ? "action.hover" : "transparent",
-                  },
-                }}
-              />
-            ))
+          skills.filter((skill) => skill.isSkillVerified).length > 0 ? (
+            skills
+              .filter((skill) => skill.isSkillVerified) // Filter skills with isSkillVerified: true
+              .map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill.name}
+                  onDelete={isEditing ? () => handleDeleteSkill(skill._id) : null}
+                  deleteIcon={<X size={16} />}
+                  variant="outlined"
+                  onClick={isEditing ? () => startEditing(skill) : null}
+                  sx={{
+                    cursor: isEditing ? "pointer" : "default",
+                    "&:hover": {
+                      backgroundColor: isEditing ? "action.hover" : "transparent",
+                    },
+                  }}
+                />
+              ))
           ) : (
-            <p className="text-gray-500">No skills available</p>
+            <p className="text-gray-500">No verified skills available</p>
           )
         ) : (
           <p className="text-yellow-500">
-            Skills are visible only after verification please verify your
+            Skills are visible only after verification. Please verify your
             certificate first.
           </p>
         )}
@@ -173,13 +175,15 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
         </Box>
       )}
 
-      <Dialog open={openDialog} onClose={() => {
-        setOpenDialog(false);
-        resetForm();
-      }}
+      <Dialog
+        open={openDialog}
+        onClose={() => {
+          setOpenDialog(false);
+          resetForm();
+        }}
       >
         <DialogTitle>{editingSkill ? "Edit Skill" : "Add New Skill"}</DialogTitle>
-        <DialogContent sx={{width: '400px'}}>
+        <DialogContent sx={{ width: "400px" }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
             <TextField
               fullWidth
@@ -199,32 +203,38 @@ const SkillsSection = ({ userData, GetUserProfile }) => {
             />
             <input
               accept="image/*"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               id="skill-image-upload"
               type="file"
               onChange={handleImageChange}
-              />
+            />
             <label htmlFor="skill-image-upload">
               <Button variant="outlined" component="span">
                 Upload Image
               </Button>
             </label>
-              <p className="text-gray-500 -mt-3">Image should be upload of skill certification </p>
+            <p className="text-gray-500 -mt-3">
+              Image should be uploaded for skill certification
+            </p>
             {imagePreview && (
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                style={{ maxWidth: '100%', maxHeight: '200px', marginTop: '10px' }} 
+              <img
+                src={imagePreview}
+                alt="Preview"
+                style={{ maxWidth: "100%", maxHeight: "200px", marginTop: "10px" }}
               />
             )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => {
-            setOpenDialog(false);
-            resetForm();
-          }}>Cancel</Button>
-          <Button 
+          <Button
+            onClick={() => {
+              setOpenDialog(false);
+              resetForm();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={!name.trim()}
             variant="contained"

@@ -46,10 +46,12 @@ function UserCard({ userDetails }) {
       </Link>
       <p className="text-gray-600 text-center">{userDetails.headline}</p>
       <button
-        className={`mt-4  bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors w-full`}
+        className={`mt-4  bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors w-full ${userDetails?.status === "pending" ? "bg-gray-400 cursor-not-allowed" : ""}`}
         onClick={HandleConnect}
       >
-        {isConnected ? "Pending" : "Connect"}
+        {/* {isConnected ? "Pending" : "Connect"} */}
+        {userDetails?.status === "pending" ? "Pending" : 
+        userDetails?.status === "not_connected" ? "Connect" : "Connect"} 
       </button>
     </div>
   );

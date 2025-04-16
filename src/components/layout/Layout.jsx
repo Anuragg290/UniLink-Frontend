@@ -16,7 +16,7 @@ const Layout = () => {
   const [messageAccessId, setMessageAccesId] = useState(null);
   const [chatId, setChatId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [innerMessages, setInnerMessages] = useState([]); // State for inner chat messages
+  const [innerMessages, setInnerMessages] = useState([]); 
 
   const handleUserSelect = async (user, chat) => {
     setChatId(chat._id);
@@ -67,8 +67,20 @@ const Layout = () => {
     try {
       setLoading(true);
       const res = await fireApi(`/api/chat/get-messages`, "GET");
-      const allParticipants = res.flatMap((chat) => chat || []);
-      setParticipants(allParticipants);
+
+      // Process the chats to get unique participants and preserve chat information
+      const processedChats = res.map((chat) => {
+        // Find the other participant (excluding current user)
+        const otherParticipant = chat.participants.find(
+          (p) => p._id !== userId
+        );
+        return {
+          ...chat,
+          otherParticipant: otherParticipant || chat.participants[0], // fallback to first participant
+        };
+      });
+
+      setParticipants(processedChats);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -109,13 +121,13 @@ const Layout = () => {
   const SendMessage = async () => {
     try {
       if (!content.trim()) return;
-      
+
       await fireApi("/api/message/send-message", "POST", {
         content,
         chatId: chatId,
         messageType: "text",
       });
-      
+
       toast.success("Message sent successfully!");
       setContent("");
       await GetInnerChat(chatId); // Refresh messages after sending
@@ -127,7 +139,7 @@ const Layout = () => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       SendMessage();
     }
@@ -171,48 +183,50 @@ const Layout = () => {
                     <span className="loading loading-spinner"></span>
                   </div>
                 ) : participants.length > 0 ? (
-                  participants.map((chat) =>
-                    chat.participants
-                      .filter((user) => user._id !== userId)
-                      .map((user) => (
-                        <div
-                          key={user._id}
-                          className="p-2 border-b border-base-300 hover:bg-base-200 cursor-pointer flex items-center gap-3"
-                          onClick={() => handleUserSelect(user, chat)}
-                        >
-                          <div className="avatar">
-                            <div className="w-10 rounded-full">
-                              {user.profilePicture ? (
-                                <img
-                                  src={user.profilePicture}
-                                  alt={user.name}
-                                />
-                              ) : (
-                                <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
-                                  <span>{user.name?.charAt(0) || "U"}</span>
-                                </div>
-                              )}
+                  participants.map((chat) => (
+                    <div
+                      key={chat._id}
+                      className="p-2 border-b border-base-300 hover:bg-base-200 cursor-pointer flex items-center gap-3"
+                      onClick={() =>
+                        handleUserSelect(chat.otherParticipant, chat)
+                      }
+                    >
+                      <div className="avatar">
+                        <div className="w-10 rounded-full">
+                          {chat.otherParticipant.profilePicture ? (
+                            <img
+                              src={chat.otherParticipant.profilePicture}
+                              alt={chat.otherParticipant.name}
+                            />
+                          ) : (
+                            <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
+                              <span>
+                                {chat.otherParticipant.name?.charAt(0) || "U"}
+                              </span>
                             </div>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{user.name}</h4>
-                            <p className="text-sm text-base-content opacity-70 truncate">
-                              {getLatestMessage(chat).content}
-                            </p>
-                          </div>
-                          {chat.unreadCount && chat.unreadCount[userId] > 0 && (
-                            <span className="badge badge-primary">
-                              {chat.unreadCount[userId]}
-                            </span>
                           )}
                         </div>
-                      ))
-                  )
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">
+                          {chat.otherParticipant.name}
+                        </h4>
+                        <p className="text-sm text-base-content opacity-70 truncate">
+                          {getLatestMessage(chat).content}
+                        </p>
+                      </div>
+                      {chat.unreadCount && chat.unreadCount[userId] > 0 && (
+                        <span className="badge badge-primary">
+                          {chat.unreadCount[userId]}
+                        </span>
+                      )}
+                    </div>
+                  ))
                 ) : (
                   <div className="p-4 text-center text-base-content opacity-70">
-                    No participants found
+                    No conversations found
                   </div>
-                )}
+                )}{" "}
               </div>
             </div>
           </div>
@@ -257,10 +271,18 @@ const Layout = () => {
                   innerMessages.map((message) => (
                     <div
                       key={message._id}
-                      className={`flex ${message.sender._id === userId ? "justify-end" : "justify-start"}`}
+                      className={`flex ${
+                        message.sender._id === userId
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
                     >
                       <div
-                        className={`max-w-xs md:max-w-md rounded-lg p-3 ${message.sender._id === userId ? "bg-primary text-primary-content" : "bg-base-200"}`}
+                        className={`max-w-xs md:max-w-md rounded-lg p-3 ${
+                          message.sender._id === userId
+                            ? "bg-primary text-primary-content"
+                            : "bg-base-200"
+                        }`}
                       >
                         <p>{message.content}</p>
                         <p className="text-xs opacity-70 mt-1">

@@ -4,10 +4,9 @@ import { fireApi } from "../utils/useFire";
 import React, { useContext, useEffect } from "react";
 import ProfileContext from "../context/profileContext";
 
-function UserCard({ userDetails }) {
-  const { user } = useContext(ProfileContext);
+function UserCard({ userDetails, getSugestion }) {
+  const { user, GetUserProfile } = useContext(ProfileContext);
   const [isConnected, setIsConnected] = React.useState(false);
-
   useEffect(() => {
     console.log("User from context:", user);
   }, [user]);
@@ -22,6 +21,8 @@ function UserCard({ userDetails }) {
       console.log(response);
       setIsConnected(true);
       toast.success(response.message || "Connected successfully");
+      GetUserProfile(userDetails?.username);
+      getSugestion();
     } catch (error) {
       console.error("Error in handleConnect:", error);
       toast.error(error.message || "Failed to connect");

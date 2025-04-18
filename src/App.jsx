@@ -20,6 +20,7 @@ import Events from "./pages/Events";
 import Analytics from "./pages/admin/Analytics";
 import Loading from "./utils/LoaderUtils";
 import SkillsApproval from "./pages/admin/SkillsApproval";
+import MyConnections from "./pages/admin/MyConnections";
 
 function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
@@ -53,6 +54,7 @@ function App() {
             <Route path="/post/:id" element={<PostPage />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="all-connections" element={<MyConnections />} />
           </Route>
         </Route>
 

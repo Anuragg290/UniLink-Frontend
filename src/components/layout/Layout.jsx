@@ -1,13 +1,16 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { fireApi } from "../../utils/useFire";
 import toast from "react-hot-toast";
+import ProfileContext from "../../context/profileContext";
 
 const Layout = () => {
-  const [showUsersModal, setShowUsersModal] = useState(false);
+  // getting my states from the context 
+  const {showUsersModal, setShowUsersModal} = useContext(ProfileContext);
+
   const [selectedUser, setSelectedUser] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [participants, setParticipants] = useState([]);
@@ -24,7 +27,7 @@ const Layout = () => {
     setSelectedUser(user);
     setShowUsersModal(false);
     setChatOpen(true);
-    await GetInnerChat(chat._id); // Fetch messages when user is selected
+    await GetInnerChat(chat._id); 
   };
 
   const closeChat = () => {

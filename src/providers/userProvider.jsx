@@ -4,7 +4,7 @@ import ProfileContext from "../context/profileContext";
 
 const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-
+  const [showUsersModal, setShowUsersModal] = useState(false);
   const GetUserProfile = async () => {
     try {
       const response = await fireApi("/me", "GET");
@@ -19,7 +19,7 @@ const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <ProfileContext.Provider value={{ user, setUser, GetUserProfile }}>
+    <ProfileContext.Provider value={{ user, setUser, GetUserProfile, showUsersModal, setShowUsersModal }}>
       {children}
     </ProfileContext.Provider>
   )

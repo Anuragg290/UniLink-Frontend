@@ -27,6 +27,7 @@ const LoginForm = () => {
 
       const userRole = await response?.data?.user?.role;
       localStorage.setItem("user-role", userRole);
+      localStorage.setItem("username", response?.data?.user?.username);
 
       toast.success("Login successful");
       e.target.reset();

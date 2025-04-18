@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { CameraAlt, Close } from "@mui/icons-material";
 import ProfileContext from "../context/profileContext";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const ProfileHeader = ({ userData, GetUserProfile }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -184,6 +184,9 @@ const ProfileHeader = ({ userData, GetUserProfile }) => {
             <MapPin size={16} className="text-gray-500 mr-1" />
             <span className="text-gray-600">Location: {userData?.location}</span>
           </div>
+          <Link to={`/all-connections`}>
+          <p className="text-blue-500 underline hover:cursor-pointer">View  Connections</p>
+          </Link>
         </div>
 
         {isOwnProfile && (

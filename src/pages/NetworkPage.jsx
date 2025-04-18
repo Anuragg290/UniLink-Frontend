@@ -71,7 +71,7 @@ const NetworkPage = () => {
 							<h2 className='text-xl font-semibold mb-4'>My Sugestion</h2>
 							<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
 								{connections.map((connection) => (
-									<UserCard key={connection._id} userDetails={connection} />
+									<UserCard key={connection._id} userDetails={connection} getSugestion={getSugestion}/>
 								))}
 							</div>
 						</div>

@@ -25,33 +25,33 @@ const RecommendedUser = ({ user, getSugestion }) => {
     }
   };
 
-  const HandleAccept = async () => {
-    try {
-      const response = await fireApi(
-        `/connections/accept/${user._id}`,
-        "PUT"
-      );
-      toast.success(response.message || "Connection accepted");
-      getSugestion();
-    } catch (error) {
-      console.error("Error in acceptConnection:", error);
-      toast.error(error.message || "Failed to accept connection");
-    }
-  };
+  // const HandleAccept = async () => {
+  //   try {
+  //     const response = await fireApi(
+  //       `/connections/accept/${user._id}`,
+  //       "PUT"
+  //     );
+  //     toast.success(response.message || "Connection accepted");
+  //     getSugestion();
+  //   } catch (error) {
+  //     console.error("Error in acceptConnection:", error);
+  //     toast.error(error.message || "Failed to accept connection");
+  //   }
+  // };
 
-  const HandleReject = async () => {
-    try {
-      const response = await fireApi(
-        `/connections/reject/${user._id}`,
-        "PUT"
-      );
-      toast.success(response.message || "Connection rejected");
-      getSugestion();
-    } catch (error) {
-      console.error("Error in rejectConnection:", error);
-      toast.error(error.message || "Failed to reject connection");
-    }
-  };
+  // const HandleReject = async () => {
+  //   try {
+  //     const response = await fireApi(
+  //       `/connections/reject/${user._id}`,
+  //       "PUT"
+  //     );
+  //     toast.success(response.message || "Connection rejected");
+  //     getSugestion();
+  //   } catch (error) {
+  //     console.error("Error in rejectConnection:", error);
+  //     toast.error(error.message || "Failed to reject connection");
+  //   }
+  // };
 
   const handlerequests = async () => {
     try {
@@ -90,18 +90,9 @@ const RecommendedUser = ({ user, getSugestion }) => {
       </Link>
       {isConnected === "received" ? (
         <div className="flex gap-2">
-          <button
-            className="px-3 py-1 rounded-full text-sm text-white bg-green-600 cursor-pointer"
-            onClick={HandleAccept}
-          >
-            Accept
-          </button>
-          <button
-            className="px-3 py-1 rounded-full text-sm text-white bg-red-600 cursor-pointer"
-            onClick={HandleReject}
-          >
-            Reject
-          </button>
+          <Link to={'/network'} className="px-3 py-1 rounded-full text-sm text-green-600 border border-green-600 cursor-pointer">
+          Accept Request
+          </Link>
         </div>
       ) : (
         <button

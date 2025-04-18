@@ -37,6 +37,9 @@ export default function Sidebar() {
           {" "}
           {user?.connections?.length || 0} connections
         </p>
+        <Link to="/all-connections" >
+        <p className="text-primary text-xs mt-1">View all connections</p>
+        </Link>
       </div>
       <div className="border-t border-base-100 p-4">
         <nav>

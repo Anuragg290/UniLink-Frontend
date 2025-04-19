@@ -8,22 +8,30 @@ const SignUpForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate(); // Initialize the navigate function
 
+  const validateSRMAPEmail = (email) => {
+    return email.toLowerCase().endsWith('@srmap.edu.in');
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    
     const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Validate email domain
+    if (!validateSRMAPEmail(data.email)) {
+      toast.error('Please use your SRMAP email address (@srmap.edu.in)');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const data = Object.fromEntries(formData.entries());
-
       const response = await fireApi("/register", "POST", data);
-
       toast.success(response.message);
-      console.log(response);
       e.target.reset();
-      navigate("/login"); // Changed from Navigate to navigate
+      navigate("/login");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error.message);
     } finally {
       setIsLoading(false);
@@ -48,8 +56,10 @@ const SignUpForm = () => {
       />
       <input
         type="email"
-        placeholder="Email"
+        placeholder="SRMAP Email"
         name="email"
+        pattern="[a-zA-Z0-9._%+-]+@srmap\.edu\.in$"
+        title="Please use your SRMAP email address (@srmap.edu.in)"
         className="input input-bordered w-full"
         required
       />

@@ -211,7 +211,7 @@ const Analytics = () => {
       const footerY = Math.min(doc.lastAutoTable.finalY + 20, pageHeight - 10);
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text("© 2024 UniLink - All Rights Reserved", 105, footerY, {
+      doc.text("© 2025 UniLink - All Rights Reserved", 105, footerY, {
         align: "center",
       });
   

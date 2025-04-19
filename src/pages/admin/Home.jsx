@@ -16,7 +16,6 @@ const Home = () => {
     try {
       setLoading(true);
       const res = await fireApi("/admin/all-users", "GET");
-
       const formatedData = res?.data?.map((user, index) => ({
         id: user._id || index + 1,
         name: user.name || "N/A",
@@ -26,10 +25,8 @@ const Home = () => {
         role: user.role || "N/A",
         about: user.about || "N/A",
       }));
-
       setRows(formatedData);
     } catch (error) {
-      console.log(error);
       toast.error(error.message || "Failed to fetch users");
     } finally {
       setLoading(false);
@@ -38,55 +35,29 @@ const Home = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
-    {
-      field: "username",
-      headerName: "Username",
-      width: 150,
-    },
-    {
-      field: "name",
-      headerName: "Name",
-      width: 150,
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      type: "email",
-      width: 200,
-    },
-    {
-      field: "role",
-      headerName: "Role",
-      type: "string",
-      width: 80,
-    },
-    {
-      field: "about",
-      headerName: "About User",
-      type: "string",
-      width: 150,
-    },
+    { field: "username", headerName: "Username", width: 150 },
+    { field: "name", headerName: "Name", width: 150 },
+    { field: "email", headerName: "Email", width: 200 },
+    { field: "role", headerName: "Role", width: 80 },
+    { field: "about", headerName: "About User", width: 150 },
     {
       field: "action",
       headerName: "Actions",
       width: 200,
       renderCell: (params) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            sx={{ mt: 1 }}
-            startIcon={<PictureAsPdf />}
-            onClick={() => generateUserReport(params.row)}
-          >
-            Report
-          </Button>
-          {/* <DeleteForeverOutlined className="cursor-pointer" onClick={() => deleteUser(params.row.id)} /> */}
-        </div>
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          startIcon={<PictureAsPdf />}
+          onClick={() => generateUserReport(params.row)}
+        >
+          Report
+        </Button>
       ),
     },
   ];
+
   const calculateEngagementRate = (data) => {
     const totalInteractions =
       (data.totalComments || 0) +
@@ -98,156 +69,114 @@ const Home = () => {
     return engagementRate.toFixed(2);
   };
 
-  const getPerformanceIndicator = (userValue, average) => {
-    if (userValue > average * 1.2) return "Excellent";
-    if (userValue > average) return "Good";
-    if (userValue > average * 0.8) return "Average";
+  const getPerformanceIndicator = (value, avg) => {
+    if (value > avg * 1.2) return "Excellent";
+    if (value > avg) return "Good";
+    if (value > avg * 0.8) return "Average";
     return "Needs Improvement";
   };
 
   const generateUserReport = async (user) => {
     try {
       setLoading(true);
-      const reportData = await fireApi(`/admin/user-report/${user.id}`, "GET");
+      const res = await fireApi(`/admin/user-report/${user.id}`, "GET");
+      const { user: userData, data } = res;
 
-      // Create PDF with landscape orientation
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
+      const doc = new jsPDF("landscape", "mm", "a4");
 
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0);
-
-      // Add header with logo and title
-      doc.setFontSize(22);
-      doc.setTextColor(40, 53, 147);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(40, 53, 147);
+      doc.setFontSize(22);
       doc.text("USER PERFORMANCE REPORT", 105, 20, { align: "left" });
 
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-
-      // Profile picture positioning
       const imageX = 20;
       const imageY = 30;
       const imageWidth = 30;
       const imageHeight = 30;
 
-      // Text positioning - starts at same Y as image but right side
-      const textX = 60; // Right of the image
-      const initialTextY = imageY; // Starts at same level as image
-      const lineHeight = 7; // Space between lines
-
-      // Add image
-      if (reportData.user.profilePicture) {
+      if (userData.profilePicture) {
         try {
           doc.addImage(
-            reportData.user.profilePicture,
+            userData.profilePicture,
             "JPEG",
             imageX,
             imageY,
             imageWidth,
             imageHeight
           );
-        } catch (error) {
-          console.error("Error adding profile image:", error);
-          doc.text(
-            "Profile Image Unavailable",
-            imageX,
-            imageY + imageHeight / 2
-          );
+        } catch (err) {
+          doc.setFontSize(10);
+          doc.setTextColor(150);
+          doc.text("Profile image unavailable", imageX, imageY + 20);
         }
       }
 
-      // Add user details - each line increments Y position by lineHeight
-      doc.text(`Name: ${reportData.user.name || "N/A"}`, textX, initialTextY);
-      doc.text(
-        `Username: ${reportData.user.username || "N/A"}`,
-        textX,
-        initialTextY + lineHeight
-      );
-      doc.text(
-        `Email: ${reportData.user.email || "N/A"}`,
-        textX,
-        initialTextY + lineHeight * 2
-      );
-      doc.text(
-        `Role: ${reportData.user.role || "N/A"}`,
-        textX,
-        initialTextY + lineHeight * 3
-      );
-      doc.text(
-        `Headline: ${reportData.user.headline || "N/A"}`,
-        textX,
-        initialTextY + lineHeight * 4
-      );
-      doc.text(
-        `Location: ${reportData.user.location || "N/A"}`,
-        textX,
-        initialTextY + lineHeight * 5
-      );
+      const textX = 60;
+      let y = imageY;
 
-      // Add report date below all other details
-      const reportDateY = initialTextY + lineHeight * 6;
+      const addTextLine = (label, value) => {
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`${label}: ${value || "N/A"}`, textX, y);
+        y += 7;
+      };
+
+      addTextLine("Name", userData.name);
+      addTextLine("Username", userData.username);
+      addTextLine("Email", userData.email);
+      addTextLine("Role", userData.role);
+      addTextLine("Headline", userData.headline);
+      addTextLine("Location", userData.location);
+
+      doc.setTextColor(0);
       doc.text(
-        `Report Generated: ${new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
+        `Report Generated: ${new Date().toLocaleString()}`,
         textX,
-        reportDateY
+        y
       );
+      y += 10;
 
-      // Add divider line below all user info
-      const dividerY = reportDateY + lineHeight;
-      doc.setDrawColor(200, 200, 200);
-      doc.line(20, dividerY, 277, dividerY);
+      doc.setDrawColor(200);
+      doc.line(20, y, 277, y);
+      y += 10;
 
-      // Main content area starts below the divider
-      const contentStartY = dividerY + 10;
-
-      // User stats table
+      // Performance Stats Table
       const stats = [
         ["Metric", "Count", "Performance"],
         [
           "Total Posts",
-          reportData.data.totalPosts || 0,
-          getPerformanceIndicator(reportData.data.totalPosts, 125),
+          data.totalPosts || 0,
+          getPerformanceIndicator(data.totalPosts, 125),
         ],
         [
           "Total Comments",
-          reportData.data.totalComments || 0,
-          getPerformanceIndicator(reportData.data.totalComments, 320),
+          data.totalComments || 0,
+          getPerformanceIndicator(data.totalComments, 320),
         ],
         [
           "Total Shares",
-          reportData.data.totalShares || 0,
-          getPerformanceIndicator(reportData.data.totalShares, 85),
+          data.totalShares || 0,
+          getPerformanceIndicator(data.totalShares, 85),
         ],
         [
           "Total Likes",
-          reportData.data.totalLikes || 0,
-          getPerformanceIndicator(reportData.data.totalLikes, 540),
+          data.totalLikes || 0,
+          getPerformanceIndicator(data.totalLikes, 540),
         ],
         [
           "Total Events",
-          reportData.data.totalEvents || 0,
-          getPerformanceIndicator(reportData.data.totalEvents, 100),
+          data.totalEvents || 0,
+          getPerformanceIndicator(data.totalEvents, 100),
         ],
         [
           "Engagement Rate",
-          `${calculateEngagementRate(reportData.data)}%`,
-          getPerformanceIndicator(calculateEngagementRate(reportData.data), 12),
+          `${calculateEngagementRate(data)}%`,
+          getPerformanceIndicator(calculateEngagementRate(data), 12),
         ],
       ];
 
       autoTable(doc, {
-        startY: contentStartY,
+        startY: y,
         head: [stats[0]],
         body: stats.slice(1),
         theme: "grid",
@@ -255,109 +184,99 @@ const Home = () => {
           fillColor: [33, 150, 243],
           textColor: 255,
           fontStyle: "bold",
-          halign: "center",
         },
-        bodyStyles: {
-          halign: "center",
-        },
-        columnStyles: {
-          0: { fontStyle: "bold" },
-          2: {
-            fontStyle: "bold",
-            cellWidth: "auto",
-            didDrawCell: (data) => {
-              if (data.cell.raw === "Excellent") {
-                doc.setTextColor(46, 125, 50);
-              } else if (data.cell.raw === "Good") {
-                doc.setTextColor(30, 136, 229);
-              } else if (data.cell.raw === "Average") {
-                doc.setTextColor(255, 152, 0);
-              } else {
-                doc.setTextColor(198, 40, 40);
-              }
-            },
-          },
-        },
+        bodyStyles: { halign: "center" },
       });
+
+      y = doc.lastAutoTable?.finalY + 15 || y + 15;
 
       // Experience Section
       doc.setFontSize(16);
       doc.setTextColor(40, 53, 147);
-      doc.text("Work Experience", 20, doc.lastAutoTable.finalY + 15);
+      doc.text("Work Experience", 20, y);
+      y += 5;
 
-      if (reportData.user.experience?.length > 0) {
-        const expData = reportData.user.experience.map((exp) => [
+      if (userData.experience?.length > 0) {
+        const expData = userData.experience.map((exp) => [
           exp.company || "N/A",
           exp.title || "N/A",
-          new Date(exp.startDate).toLocaleDateString() +
-            " - " +
-            (exp.endDate
+          `${new Date(exp.startDate).toLocaleDateString()} - ${
+            exp.endDate
               ? new Date(exp.endDate).toLocaleDateString()
-              : "Present"),
+              : "Present"
+          }`,
           exp.description || "",
         ]);
-
         autoTable(doc, {
-          startY: doc.lastAutoTable.finalY + 20,
+          startY: y + 5,
           head: [["Company", "Position", "Duration", "Description"]],
           body: expData,
-          styles: {
-            fontSize: 10,
-            cellPadding: 3,
-          },
-          columnStyles: {
-            3: { cellWidth: "auto" },
-          },
+          styles: { fontSize: 10, cellPadding: 3 },
         });
+        y = doc.lastAutoTable.finalY + 10;
       } else {
-        doc.setFontSize(12);
-        doc.text(
-          "No work experience listed",
-          20,
-          doc.lastAutoTable.finalY + 20
-        );
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text("No professional experience listed.", 25, y + 10);
+        y += 20;
       }
 
       // Education Section
       doc.setFontSize(16);
       doc.setTextColor(40, 53, 147);
-      doc.text("Education", 20, doc.lastAutoTable.finalY + 15);
+      doc.text("Education", 20, y);
+      y += 5;
 
-      if (reportData.user.education?.length > 0) {
-        const eduData = reportData.user.education.map((edu) => [
+      if (userData.education?.length > 0) {
+        const eduData = userData.education.map((edu) => [
           edu.school || "N/A",
           edu.fieldOfStudy || "N/A",
-          `${edu.startYear} - ${edu.endYear}`,
+          `${edu.startYear} - ${edu.endYear || "Present"}`,
         ]);
-
         autoTable(doc, {
-          startY: doc.lastAutoTable.finalY + 20,
+          startY: y + 5,
           head: [["Institution", "Field of Study", "Years"]],
           body: eduData,
-          styles: {
-            fontSize: 10,
-            cellPadding: 3,
-          },
+          styles: { fontSize: 10, cellPadding: 3 },
         });
+        y = doc.lastAutoTable.finalY + 10;
       } else {
-        doc.setFontSize(12);
-        doc.text("No education listed", 20, doc.lastAutoTable.finalY + 20);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text("No education records found.", 25, y + 10);
       }
 
+      // Footer
       const pageHeight = doc.internal.pageSize.height;
-      const footerY = Math.min(doc.lastAutoTable.finalY + 20, pageHeight - 10);
-      doc.setFontSize(10);
-      doc.setTextColor(100); // Gray color for footer
-      doc.text("© 2024 UniLink - All Rights Reserved", 105, footerY, {
-        align: "center",
-      });
-      // Save the PDF
-      doc.save(`user-report-${reportData.user.username}.pdf`);
+      const footerHeight = 15; // Height reserved for footer
+      const minSpacing = 20; // Minimum spacing between content and footer
 
+      // Calculate footer position
+      let footerY = pageHeight - footerHeight;
+
+      // Add a page if content is too close to footer
+      if (doc.lastAutoTable?.finalY && doc.lastAutoTable.finalY > pageHeight - (footerHeight + minSpacing)) {
+          doc.addPage();
+          footerY = pageHeight - footerHeight;
+      }
+
+      // Add footer line
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(20, footerY - 5, 277, footerY - 5);
+
+      // Add footer text
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text("© 2024 UniLink - All Rights Reserved", 148, footerY, {
+          align: "center"
+      });
+
+      // Save the document
+      doc.save(`user-report-${userData.username}.pdf`);
       toast.success("Report generated successfully");
-    } catch (error) {
-      console.error("Error generating report:", error);
-      toast.error(error.message || "Failed to generate report");
+    } catch (err) {
+      toast.error("Error generating report");
     } finally {
       setLoading(false);
     }
@@ -376,17 +295,13 @@ const Home = () => {
         loading={loading}
         initialState={{
           pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
+            paginationModel: { pageSize: 5 },
           },
         }}
         pageSizeOptions={[5, 10, 25]}
         checkboxSelection
         disableRowSelectionOnClick
       />
-
-  
     </Box>
   );
 };

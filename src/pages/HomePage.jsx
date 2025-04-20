@@ -48,7 +48,7 @@ const HomePage = () => {
         <PostCreation getPost={getPost}/>
 
         {posts?.map((post) => (
-          <Post key={post._id} post={post} getPostCall={getPost} />
+          <Post key={post._id} post={post} getPost={getPost} />
         ))}
 
         {posts?.length === 0 && (

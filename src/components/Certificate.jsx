@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { fireApi } from "../utils/useFire";
 import toast from "react-hot-toast";
 import { ShieldCheck, X } from "lucide-react";
 import { useParams } from "react-router-dom";
+import ProfileContext from "../context/profileContext";
 
-const Certification = ({ userData, GetUserProfile, isOwnProfile }) => {
+const Certification = ({ userData, GetUserProfile }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [certifications, setCertifications] = useState([]);
   const [formData, setFormData] = useState({
@@ -18,12 +19,18 @@ const Certification = ({ userData, GetUserProfile, isOwnProfile }) => {
   const [editingId, setEditingId] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
+    const { user } = useContext(ProfileContext);
+  const isOwnProfile = user?.username === userData?.username;
+
   const { username } = useParams();
 
   useEffect(() => {
     if (userData?.certifications) {
-      setCertifications(userData.certifications);
-      if (userData.certifications.length === 0 && isOwnProfile) {
+      // Filter to only show verified certifications
+      const verifiedCerts = userData.certifications.filter(cert => cert.isVerified);
+      setCertifications(verifiedCerts);
+      
+      if (verifiedCerts.length === 0 && isOwnProfile) {
         setIsAdding(true);
       }
     }
@@ -110,7 +117,7 @@ const Certification = ({ userData, GetUserProfile, isOwnProfile }) => {
     try {
       const res = await fireApi(`/delete-certification/${id}`, "DELETE");
       toast.success(res?.message || "Certification deleted successfully");
-      GetUserProfile(GetUserProfile);
+      GetUserProfile(username);
     } catch (error) {
       console.error("Error deleting certification:", error);
       toast.error(error.message || "Failed to delete certification");
@@ -140,7 +147,7 @@ const Certification = ({ userData, GetUserProfile, isOwnProfile }) => {
 
       {certifications.length === 0 && !isAdding && isOwnProfile && (
         <div className="text-start py-4">
-          <p className="text-gray-500 mb-4">No certifications added yet</p>
+          <p className="text-yellow-500 mb-4">Certificate are visible only after the verification of Admin.</p>
           <button
             onClick={() => setIsAdding(true)}
             className="bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300"

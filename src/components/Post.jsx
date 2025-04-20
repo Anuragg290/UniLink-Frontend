@@ -1,17 +1,31 @@
 import { formatDistanceToNow } from "date-fns";
-import { Loader, MessageCircle, Send, Share2, ThumbsUp, Trash2, Edit2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Loader,
+  MessageCircle,
+  Send,
+  Share2,
+  ThumbsUp,
+  Trash2,
+  Edit2,
+} from "lucide-react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import PostAction from "./PostAction";
 import toast from "react-hot-toast";
 import { fireApi } from "../utils/useFire";
+import ProfileContext from "../context/profileContext";
 
-const Post = ({ post, getPostCall }) => {
+const Post = ({ post, getPost }) => {
+  const { user } = useContext(ProfileContext);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [comments, setComments] = useState(Array.isArray(post?.comments) ? post.comments : []);
-  const isOwner = post?.author?._id === post?.author?._id;
-  const [isLiked, setIsLiked] = useState(post?.likes?.includes(post?.author?._id));
+  const [comments, setComments] = useState(
+    Array.isArray(post?.comments) ? post.comments : []
+  );
+  const isOwner = user?.username === post?.author?.username;
+  const [isLiked, setIsLiked] = useState(
+    post?.likes?.includes(post?.author?._id)
+  );
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -25,12 +39,14 @@ const Post = ({ post, getPostCall }) => {
     event.preventDefault();
     try {
       setIsAddingComment(true);
-      const res = await fireApi(`/posts/${post?._id}/comment`, "POST", { content: newComment });
+      const res = await fireApi(`/posts/${post?._id}/comment`, "POST", {
+        content: newComment,
+      });
       setComments(Array.isArray(res) ? res : []);
       setNewComment("");
       setIsAddingComment(false);
       toast.success("Comment added successfully");
-      getPostCall();	
+      getPost();
     } catch (error) {
       console.log(error);
       setIsAddingComment(false);
@@ -42,7 +58,7 @@ const Post = ({ post, getPostCall }) => {
     try {
       await fireApi(`/posts/${post?._id}/like`, "POST");
       setIsLiked(!isLiked);
-      getPostCall();
+      getPost();
     } catch (error) {
       console.log(error);
       toast.error(error.message || "An error occurred");
@@ -55,7 +71,7 @@ const Post = ({ post, getPostCall }) => {
       await fireApi(`/posts//delete/${post?._id}`, "DELETE");
       setIsDeletingPost(false);
       toast.success("Post deleted successfully");
-      getPostCall();
+      getPost();
     } catch (error) {
       console.log(error);
       setIsDeletingPost(false);
@@ -65,11 +81,17 @@ const Post = ({ post, getPostCall }) => {
 
   const handleEditComment = async (commentId, updatedContent) => {
     try {
-      const res = await fireApi(`/posts/${post?._id}/comments/${commentId}`, "PUT", { content: updatedContent });
-	  toast.success(res?.message || "Comment updated successfully");
+      const res = await fireApi(
+        `/posts/${post?._id}/comments/${commentId}`,
+        "PUT",
+        { content: updatedContent }
+      );
+      toast.success(res?.message || "Comment updated successfully");
       setComments((prevComments) =>
         prevComments.map((comment) =>
-          comment._id === commentId ? { ...comment, content: updatedContent } : comment
+          comment._id === commentId
+            ? { ...comment, content: updatedContent }
+            : comment
         )
       );
       setEditingCommentId(null);
@@ -92,16 +114,16 @@ const Post = ({ post, getPostCall }) => {
   };
 
   const handleSharePost = (post) => async () => {
-	try {
-		const res = await fireApi(`/posts/${post?._id}/share`, "POST");
-		console.log(res);
-		
-		toast.success(res?.message ||"Post shared successfully");
-		getPostCall();
-	} catch (error) {
-		console.log(error);
-		toast.error(error.message || "An error occurred");
-	}
+    try {
+      const res = await fireApi(`/posts/${post?._id}/share`, "POST");
+      console.log(res);
+
+      toast.success(res?.message || "Post shared successfully");
+      getPost();
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message || "An error occurred");
+    }
   };
 
   return (
@@ -172,7 +194,11 @@ const Post = ({ post, getPostCall }) => {
             text={`Comment (${comments.length})`}
             onClick={() => setShowComments(!showComments)}
           />
-          <PostAction icon={<Share2 size={18} />} text="Share" onClick={handleSharePost(post)}/>
+          <PostAction
+            icon={<Share2 size={18} />}
+            text="Share"
+            onClick={handleSharePost(post)}
+          />
         </div>
       </div>
 
@@ -199,7 +225,10 @@ const Post = ({ post, getPostCall }) => {
                     </span>
                   </div>
                   {editingCommentId === comment._id ? (
-                    <form onSubmit={handleUpdateComment} className="flex items-center">
+                    <form
+                      onSubmit={handleUpdateComment}
+                      className="flex items-center"
+                    >
                       <input
                         type="text"
                         value={editedContent}
@@ -217,7 +246,13 @@ const Post = ({ post, getPostCall }) => {
                     <div className="flex items-center justify-between">
                       <p>{comment.content}</p>
                       <p className="text-xs text-info flex items-center gap-3">
-                        <Edit2 size={14} className="text-info cursor-pointer" onClick={() => handleEditClick(comment)} />
+                        {isOwner && (
+                          <Edit2
+                            size={14}
+                            className="text-info cursor-pointer"
+                            onClick={() => handleEditClick(comment)}
+                          />
+                        )}
                       </p>
                     </div>
                   )}

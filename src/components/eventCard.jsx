@@ -13,14 +13,20 @@ import { Link } from "react-router-dom";
 import PostAction from "./PostAction";
 import toast from "react-hot-toast";
 import { fireApi } from "../utils/useFire";
+import ProfileContext from "../context/profileContext";
+import { useContext } from "react";
 
 const EventCard = ({ events, getEvents }) => {
+  const {user} = useContext(ProfileContext);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [comments, setComments] = useState(
     Array.isArray(events?.comments) ? events.comments : []
   );
-  const isOwner = events?.author?._id === events?.author?._id;
+  const isOwner = user?.username === events?.createdBy?.username;
+  console.log(isOwner, "isOwner");
+  console.log(user, "user");
+  console.log(events, "events");
   const [isLiked, setIsLiked] = useState(
     events?.likes?.includes(events?.author?._id)
   );
